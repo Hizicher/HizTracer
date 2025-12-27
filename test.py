@@ -1,5 +1,6 @@
 import pytest
-from lib import Vector
+from lib import Vector, Window
+from PIL import Image
 
 def test_is_addition_working():
 
@@ -50,6 +51,14 @@ def test_is_dot_product_working():
 
     assert product == 11
 
+canvas = Window(100, 200, "test image")
+image = canvas.img.load()
+
+for i in range(100):
+
+    image[50, i + 1] = (255, 0, 0)
+
+image.save("static/test image.png")
 
 
 

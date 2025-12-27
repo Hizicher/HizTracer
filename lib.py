@@ -55,9 +55,24 @@ class Vector:
     def dot_product(self, other):
 
         return self. x * other.x + self.y * other.y + self.z * other.z
+    
+
 class Window:
 
     def __init__(self, size_x: int, size_y: int, name: str):
+
+        self.size_x = size_x
+        self.size_y = size_y
+        self.aspect_ratio = float(self.size_x / self.size_y)
+
+        self.left_side = - 1
+        self.right_side = 1
+        self.upside = -1 / self.aspect_ratio
+        self.downside = 1 / self.aspect_ratio
+
+        self.x_step = (self.right_side - self.left_side) / (self.size_x - 1)
+        self.y_step = (self.downside - self.upside) / ((self.size_y - 1) * self.aspect_ratio) 
+
 
         files = os.listdir("./static")
 
@@ -68,6 +83,58 @@ class Window:
             self.img = Image.new("RGB", (size_x, size_y), (0, 0, 0))
             self.img.save(f"static/{name}.png")
 
-def blit_image():
+    def coordinate_translator(self, point: Vector, pillow_to_real: bool):
 
-    pass
+        half_width = self.size_x / 2
+        half_height = self.size_y / 2
+
+        if pillow_to_real:
+
+            return Vector((point.x - half_width) / (half_width) , (point.y + half_height) / (half_height * self.aspect_ratio)) 
+        
+        return Vector((point.x + half_width) / (half_width) , (point.y - half_height) / (half_height * self.aspect_ratio))
+
+class Ray:
+
+    def __init__(self, origin: Vector, direction: Vector):
+
+        self.origin = origin
+        self.direction = direction.normalize()
+
+class Sphere:
+
+    def __init__(self, center: Vector, radius):
+
+        self.center = center
+        self.radius = radius
+
+
+class Scene:
+
+    def __init__(self, window: Window, shapes: list, camera: Vector, size):
+
+        self.window = window
+        self.shapes = shapes
+        self.size = size
+        self.camera = camera
+
+    def blit_image(self):
+
+        for shape in self.shapes:
+
+            if isinstance(shape, Sphere):
+
+                for i in range(self.window.size_y):
+
+                    y = self.window.upside + self.window.y_step * i
+
+                    for j in range(self.window.size_x):
+                        
+                        x = self.window.left_side + self.window.x_step * j
+                        sphere_to_ray = self.camera - shape.center
+                        ray = Ray(self.camera, Vector(x, y, 0) - self.camera)
+
+                        b = 2 * ray.direction.dot_product(sphere_to_ray)
+                        c = sphere_to_ray.dot_product(sphere_to_ray) - shape.center ** 2
+                        discriminant = b ** 2 - 4 * c
+                        distance = (-b - discriminant) / 2
