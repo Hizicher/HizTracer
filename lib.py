@@ -60,6 +60,11 @@ class Vector:
 
         return self. x * other.x + self.y * other.y + self.z * other.z
     
+    def as_tuple(self, rounded: bool):
+
+        if rounded:
+            return round(self.x), round(self.y), round(self.z)
+        return self.x, self.y, self.z
 
 class Window:
 
@@ -109,7 +114,7 @@ class Ray:
 
 class Sphere:
 
-    def __init__(self, center: Vector, radius, color: tuple, material: str):
+    def __init__(self, center: Vector, radius, color: Vector, material: str):
 
         self.center = center
         self.radius = radius
@@ -151,7 +156,7 @@ class Scene:
                 ray = Ray(self.camera, Vector(x, y, 0) - self.camera)
 
                 b = 2 * ray.direction.dot_product(sphere_to_ray)
-                c = sphere_to_ray.dot_product(sphere_to_ray) - shape.radius** 2
+                c = sphere_to_ray.dot_product(sphere_to_ray) - shape.radius ** 2
                 discriminant = b ** 2 - 4 * c
 
                 if discriminant >= 0:
@@ -161,5 +166,12 @@ class Scene:
                     if distance > 0:
 
                         hit_position = ray.origin + ray.direction * distance
-                        pixels[j, i] = shape.color
+                        pixels[j, i] = self.diffuse_sphere(shape, ray, hit_position).as_tuple(True)
+
+    def diffuse_sphere(self, shape: Sphere, ray: Vector, hit_position):
+        
+        normal_vector = shape.center - hit_position
+
+        return shape.color * normal_vector.normalize().dot_product(ray.direction)
+
 

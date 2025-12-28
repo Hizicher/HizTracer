@@ -55,9 +55,9 @@ def test_is_dot_product_working():
 def test_render():
 
     window = Window(320, 200, "test")
-    red_sphere = Sphere(Vector(0, -0.4, 0), 0.1, (255, 0, 0), "Gold")
-    yellow_sphere = Sphere(Vector(0, 0, 0), 0.1, (0, 255, 255), "Gold")
-    green_sphere = Sphere(Vector(0, 0.4, 0), 0.1, (0, 255, 0), "Gold")
+    red_sphere = Sphere(Vector(0, -0.4, 0), 0.1, Vector(255, 0, 0), "Gold")
+    yellow_sphere = Sphere(Vector(0, 0, 0), 0.1, Vector(0, 255, 255), "Gold")
+    green_sphere = Sphere(Vector(0, 0.4, 0), 0.1, Vector(0, 255, 0), "Gold")
     objects = [red_sphere, yellow_sphere, green_sphere]
     scene = Scene(window, objects, Vector(0, 0, -1), 0)
     scene.blit_image()
