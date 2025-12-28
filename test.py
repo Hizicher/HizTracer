@@ -1,5 +1,5 @@
 import pytest
-from lib import Vector, Window
+from lib import Vector, Window, Ray, Sphere, Scene
 from PIL import Image
 
 def test_is_addition_working():
@@ -51,17 +51,18 @@ def test_is_dot_product_working():
 
     assert product == 11
 
-canvas = Window(100, 200, "test image")
-image = canvas.img.load()
 
-for i in range(100):
+def test_render():
 
-    image[50, i + 1] = (255, 0, 0)
+    window = Window(320, 200, "test")
+    red_sphere = Sphere(Vector(0, -0.4, 0), 0.1, (255, 0, 0), "Gold")
+    yellow_sphere = Sphere(Vector(0, 0, 0), 0.1, (0, 255, 255), "Gold")
+    green_sphere = Sphere(Vector(0, 0.4, 0), 0.1, (0, 255, 0), "Gold")
+    objects = [red_sphere, yellow_sphere, green_sphere]
+    scene = Scene(window, objects, Vector(0, 0, -1), 0)
+    scene.blit_image()
 
-image.save("static/test image.png")
-
-
-
+test_render()
 test_is_addition_working()
 test_is_subtraction_working()
 test_is_multiplication_working()

@@ -19,7 +19,9 @@ class Vector:
         return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
     
     def __truediv__(self, other):
+
         try:
+
             new_x = self.x / other
             new_y = self.y / other
             new_z = self.z / other
@@ -31,7 +33,9 @@ class Vector:
             raise ValueError("A vector may merely be divided by a scalar")
 
     def __mul__(self, other):
+
         try:
+
             new_x = self.x * other
             new_y = self.y * other
             new_z = self.z * other
@@ -63,6 +67,7 @@ class Window:
 
         self.size_x = size_x
         self.size_y = size_y
+        self.name = name
         self.aspect_ratio = float(self.size_x / self.size_y)
 
         self.left_side = - 1
@@ -71,7 +76,7 @@ class Window:
         self.downside = 1 / self.aspect_ratio
 
         self.x_step = (self.right_side - self.left_side) / (self.size_x - 1)
-        self.y_step = (self.downside - self.upside) / ((self.size_y - 1) * self.aspect_ratio) 
+        self.y_step = (self.downside - self.upside) / ((self.size_y - 1)) 
 
 
         files = os.listdir("./static")
@@ -82,6 +87,7 @@ class Window:
             
             self.img = Image.new("RGB", (size_x, size_y), (0, 0, 0))
             self.img.save(f"static/{name}.png")
+
 
     def coordinate_translator(self, point: Vector, pillow_to_real: bool):
 
@@ -103,10 +109,12 @@ class Ray:
 
 class Sphere:
 
-    def __init__(self, center: Vector, radius):
+    def __init__(self, center: Vector, radius, color: tuple, material: str):
 
         self.center = center
         self.radius = radius
+        self.color = color
+        self.material = material
 
 
 class Scene:
@@ -119,22 +127,39 @@ class Scene:
         self.camera = camera
 
     def blit_image(self):
+        
+        pixels = self.window.img.load()
 
         for shape in self.shapes:
 
             if isinstance(shape, Sphere):
 
-                for i in range(self.window.size_y):
+                self.ray_trace_sphere(shape, pixels)
+    
+        self.window.img.save(f"static/{self.window.name}.png")
 
-                    y = self.window.upside + self.window.y_step * i
+    def ray_trace_sphere(self, shape: Sphere, pixels):
 
-                    for j in range(self.window.size_x):
-                        
-                        x = self.window.left_side + self.window.x_step * j
-                        sphere_to_ray = self.camera - shape.center
-                        ray = Ray(self.camera, Vector(x, y, 0) - self.camera)
+        for i in range(self.window.size_y):
 
-                        b = 2 * ray.direction.dot_product(sphere_to_ray)
-                        c = sphere_to_ray.dot_product(sphere_to_ray) - shape.center ** 2
-                        discriminant = b ** 2 - 4 * c
-                        distance = (-b - discriminant) / 2
+            y = self.window.upside + self.window.y_step * i
+
+            for j in range(self.window.size_x):
+                
+                x = self.window.left_side + self.window.x_step * j
+                sphere_to_ray = self.camera - shape.center
+                ray = Ray(self.camera, Vector(x, y, 0) - self.camera)
+
+                b = 2 * ray.direction.dot_product(sphere_to_ray)
+                c = sphere_to_ray.dot_product(sphere_to_ray) - shape.radius** 2
+                discriminant = b ** 2 - 4 * c
+
+                if discriminant >= 0:
+
+                    distance = (-b - sqrt(discriminant)) / 2
+                    
+                    if distance > 0:
+
+                        hit_position = ray.origin + ray.direction * distance
+                        pixels[j, i] = shape.color
+
