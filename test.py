@@ -1,5 +1,5 @@
 import pytest
-from lib import Vector, Window, Ray, Sphere, Scene
+from lib import Vector, Window, Ray, Sphere, Scene, Light
 from PIL import Image
 
 def test_is_addition_working():
@@ -54,12 +54,13 @@ def test_is_dot_product_working():
 
 def test_render():
 
-    window = Window(320, 200, "test")
+    window = Window(540, 400, "test")
     red_sphere = Sphere(Vector(0, -0.4, 0), 0.1, Vector(255, 0, 0), "Gold")
     yellow_sphere = Sphere(Vector(0, 0, 0), 0.1, Vector(0, 255, 255), "Gold")
     green_sphere = Sphere(Vector(0, 0.4, 0), 0.1, Vector(0, 255, 0), "Gold")
+    light = Light(Vector(0, window.upside, 0), Vector(255, 255, 255))
     objects = [red_sphere, yellow_sphere, green_sphere]
-    scene = Scene(window, objects, Vector(0, 0, -1), 0)
+    scene = Scene(window, objects, Vector(0, 0, -1), light, 0)
     scene.blit_image()
 
 test_render()

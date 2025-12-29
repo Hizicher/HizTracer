@@ -75,13 +75,14 @@ class Window:
         self.name = name
         self.aspect_ratio = float(self.size_x / self.size_y)
 
-        self.left_side = - 1
+        self.left_side = -1
         self.right_side = 1
         self.upside = -1 / self.aspect_ratio
         self.downside = 1 / self.aspect_ratio
 
         self.x_step = (self.right_side - self.left_side) / (self.size_x - 1)
-        self.y_step = (self.downside - self.upside) / ((self.size_y - 1)) 
+        self.y_step = (self.downside - self.upside) / ((self.size_y - 1))
+         
 
 
         files = os.listdir("./static")
@@ -121,15 +122,23 @@ class Sphere:
         self.color = color
         self.material = material
 
+class Light:
+
+    def __init__(self, position: Vector, color: Vector):
+
+        self.position = position
+        self.color = color
+
 
 class Scene:
 
-    def __init__(self, window: Window, shapes: list, camera: Vector, size):
+    def __init__(self, window: Window, shapes: list, camera: Vector, light: Light, size):
 
         self.window = window
         self.shapes = shapes
         self.size = size
         self.camera = camera
+        self.light = light
 
     def blit_image(self):
         
@@ -144,6 +153,8 @@ class Scene:
         self.window.img.save(f"static/{self.window.name}.png")
 
     def ray_trace_sphere(self, shape: Sphere, pixels):
+        
+        screen_size = self.window.size_y * self.window.size_x
 
         for i in range(self.window.size_y):
 
@@ -166,12 +177,35 @@ class Scene:
                     if distance > 0:
 
                         hit_position = ray.origin + ray.direction * distance
-                        pixels[j, i] = self.diffuse_sphere(shape, ray, hit_position).as_tuple(True)
+                        color_diffused = self.diffuse_sphere(shape, ray, hit_position, shape.color)
+                        color_specular_shaded = self.specular_shading_sphere(shape, ray, hit_position)
 
-    def diffuse_sphere(self, shape: Sphere, ray: Vector, hit_position):
+                        color_final = shape.color * 0 + color_diffused + color_specular_shaded
+
+                        pixels[j, i] = color_final.as_tuple(True)
+                        print(f"{100 * (i * self.window.size_x + j) // screen_size} %", end="\r")
+
+    def diffuse_sphere(self, shape: Sphere, ray: Vector, hit_position, color: Vector):
         
         normal_vector = shape.center - hit_position
 
-        return shape.color * normal_vector.normalize().dot_product(ray.direction)
+        return color * normal_vector.normalize().dot_product(ray.direction)
 
+    def specular_shading_sphere(self, shape: Sphere, ray: Vector, hit_position):
+        
+        normal_vector = shape.center - hit_position
+        light_to_plane = hit_position - self.light.position
+        viewer_vector = self.camera - hit_position
+
+        normal_vector = normal_vector.normalize()
+        light_to_plane = light_to_plane.normalize()
+        viewer_vector = viewer_vector.normalize()
+
+        reflected = light_to_plane - normal_vector * 2 * light_to_plane.dot_product(normal_vector) 
+        light_to_plane *= -1
+        halfway_vector = (light_to_plane + viewer_vector).normalize()
+        blinn_term = halfway_vector.dot_product(reflected) ** 32
+
+
+        return self.light.color * blinn_term
 
