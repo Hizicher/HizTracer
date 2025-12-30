@@ -33,8 +33,6 @@ def test_is_magnitude_correct():
 
     assert vector_a.magnitude() == 5.0
 
-
-
 def test_is_normalization_working():
 
     vector_a = Vector(3, 4, 0)
@@ -51,22 +49,35 @@ def test_is_dot_product_working():
 
     assert product == 11
 
-
 def test_render():
 
     window = Window(540, 400, "test")
     red_sphere = Sphere(Vector(0, -0.4, 0), 0.1, Vector(255, 0, 0), "Gold")
     yellow_sphere = Sphere(Vector(0, 0, 0), 0.1, Vector(0, 255, 255), "Gold")
     green_sphere = Sphere(Vector(0, 0.4, 0), 0.1, Vector(0, 255, 0), "Gold")
-    light = Light(Vector(0, window.upside, 0), Vector(255, 255, 255))
+    light = Light(Vector(1, window.upside, 0), Vector(255, 255, 255))
     objects = [red_sphere, yellow_sphere, green_sphere]
-    scene = Scene(window, objects, Vector(0, 0, -1), light, 0)
+    camera = Vector(0, -0.4, -1)
+    scene = Scene(window, objects, Vector(0, -0.4, -1), light, 0)
     scene.blit_image()
 
-test_render()
+def test_render_with_reflections():
+
+    window = Window(540, 400, "test")
+    red_sphere = Sphere(Vector(0, -0.4, 0), 0.1, Vector(255, 0, 0), "Gold")
+    yellow_sphere = Sphere(Vector(0, 0, 0), 0.1, Vector(0, 255, 255), "Gold")
+    green_sphere = Sphere(Vector(0, 0.4, 0), 0.1, Vector(0, 255, 0), "Gold")
+    light = Light(Vector(1, window.upside, 0), Vector(255, 255, 255))
+    objects = [red_sphere, yellow_sphere, green_sphere]
+    camera = Vector(0, 0, -1)
+    scene = Scene(window, objects, Vector(0, -0.4, -1), light, 0)
+    scene.blit_image()
+
 test_is_addition_working()
 test_is_subtraction_working()
 test_is_multiplication_working()
 test_is_magnitude_correct()
 test_is_normalization_working()
 test_is_dot_product_working()
+test_render()
+#test_render_with_reflections()

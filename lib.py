@@ -63,8 +63,14 @@ class Vector:
     def as_tuple(self, rounded: bool):
 
         if rounded:
+
             return round(self.x), round(self.y), round(self.z)
+        
         return self.x, self.y, self.z
+
+    def multiply_colors(self, other):
+
+        return Vector(round(255 * self.x / 255 * other.x / 255), round(255 * self.y / 255 * other.y / 255), round(255 * self.z / 255 * other.z / 255))
 
 class Window:
 
@@ -83,8 +89,6 @@ class Window:
         self.x_step = (self.right_side - self.left_side) / (self.size_x - 1)
         self.y_step = (self.downside - self.upside) / ((self.size_y - 1))
          
-
-
         files = os.listdir("./static")
 
         if  name not in files:
@@ -93,18 +97,6 @@ class Window:
             
             self.img = Image.new("RGB", (size_x, size_y), (0, 0, 0))
             self.img.save(f"static/{name}.png")
-
-
-    def coordinate_translator(self, point: Vector, pillow_to_real: bool):
-
-        half_width = self.size_x / 2
-        half_height = self.size_y / 2
-
-        if pillow_to_real:
-
-            return Vector((point.x - half_width) / (half_width) , (point.y + half_height) / (half_height * self.aspect_ratio)) 
-        
-        return Vector((point.x + half_width) / (half_width) , (point.y - half_height) / (half_height * self.aspect_ratio))
 
 class Ray:
 
@@ -144,15 +136,11 @@ class Scene:
         
         pixels = self.window.img.load()
 
-        for shape in self.shapes:
-
-            if isinstance(shape, Sphere):
-
-                self.ray_trace_sphere(shape, pixels)
+        self.ray_trace_sphere(self.shapes, pixels)
     
         self.window.img.save(f"static/{self.window.name}.png")
 
-    def ray_trace_sphere(self, shape: Sphere, pixels):
+    def ray_trace_sphere(self, shapes: list, pixels):
         
         screen_size = self.window.size_y * self.window.size_x
 
@@ -163,35 +151,73 @@ class Scene:
             for j in range(self.window.size_x):
                 
                 x = self.window.left_side + self.window.x_step * j
-                sphere_to_ray = self.camera - shape.center
+
                 ray = Ray(self.camera, Vector(x, y, 0) - self.camera)
 
-                b = 2 * ray.direction.dot_product(sphere_to_ray)
-                c = sphere_to_ray.dot_product(sphere_to_ray) - shape.radius ** 2
-                discriminant = b ** 2 - 4 * c
+                self.ray_bounce(j, i, ray, shapes, self.light.color, pixels, 0)
+                
+                print(f"{100 * (i  * self.window.size_x + j) // screen_size}", end="%\r")
+    
+    def ray_bounce(self, j: int, i: int, ray: Ray, shapes: list, light_color: Vector, pixels, reflected_colors: list, amount_of_calls: int):
 
-                if discriminant >= 0:
+        if amount_of_calls == 3:
 
-                    distance = (-b - sqrt(discriminant)) / 2
-                    
-                    if distance > 0:
+            pixels[j, i] = pixels[j, i][0] // 3, pixels[j, i][1] // 3, pixels[j, i][2] // 3
 
-                        hit_position = ray.origin + ray.direction * distance
-                        color_diffused = self.diffuse_sphere(shape, ray, hit_position, shape.color)
-                        color_specular_shaded = self.specular_shading_sphere(shape, ray, hit_position)
+            return True
+        
+        for shape in shapes:
 
-                        color_final = shape.color * 0 + color_diffused + color_specular_shaded
+            distance = self.does_ray_hit(ray, shape)
 
-                        pixels[j, i] = color_final.as_tuple(True)
-                        print(f"{100 * (i * self.window.size_x + j) // screen_size} %", end="\r")
+            if distance != None and distance > 0:
 
+                hit_position = ray.origin + ray.direction * distance
+
+                color_diffused = self.diffuse_sphere(shape, ray, hit_position, shape.color)
+                color_specular_shaded = self.specular_shading_sphere(shape, ray, hit_position, light_color)
+
+                color_final = shape.color * 0 + color_diffused + color_specular_shaded
+                color_final = shape.color.multiply_colors(color_final)
+                reflected_colors.append(color_final)
+                
+                normal_ray = hit_position - shape.center
+                normal_ray = normal_ray.normalize()
+                ray_normalized = ray.normalize() * -1
+                reflected_ray = self.reflect_ray(normal_ray, ray_normalized).normalize()
+
+                self.ray_bounce(j, i, reflected_ray, shapes, color_final, pixels, reflected_colors, amount_of_calls + 1)
+
+        if amount_of_calls > 1:
+
+            pixels[j, i] = pixels[j, i][0] // amount_of_calls, pixels[j, i][1] // amount_of_calls, pixels[j, i][2] // 3
+        
+        return True
+    
+    def does_ray_hit(self, ray: Ray, shape: Sphere):
+
+        sphere_to_ray = self.camera - shape.center
+        b = 2 * ray.direction.dot_product(sphere_to_ray)
+        c = sphere_to_ray.dot_product(sphere_to_ray) - shape.radius ** 2
+        discriminant = b ** 2 - 4 * c
+
+        if discriminant >= 0:
+
+            return (-b - sqrt(discriminant)) / 2
+        
+        return None
+
+    def reflect_ray(self, normal: Vector, incident: Vector):
+
+        return incident - normal * 2 * incident.dot_product(normal)
+    
     def diffuse_sphere(self, shape: Sphere, ray: Vector, hit_position, color: Vector):
         
         normal_vector = shape.center - hit_position
 
         return color * normal_vector.normalize().dot_product(ray.direction)
 
-    def specular_shading_sphere(self, shape: Sphere, ray: Vector, hit_position):
+    def specular_shading_sphere(self, shape: Sphere, ray: Vector, hit_position, color: Vector):
         
         normal_vector = shape.center - hit_position
         light_to_plane = hit_position - self.light.position
@@ -201,11 +227,10 @@ class Scene:
         light_to_plane = light_to_plane.normalize()
         viewer_vector = viewer_vector.normalize()
 
-        reflected = light_to_plane - normal_vector * 2 * light_to_plane.dot_product(normal_vector) 
+        reflected = self.reflect_ray(normal_vector, light_to_plane)
         light_to_plane *= -1
         halfway_vector = (light_to_plane + viewer_vector).normalize()
         blinn_term = halfway_vector.dot_product(reflected) ** 32
 
-
-        return self.light.color * blinn_term
+        return color * blinn_term
 
