@@ -63,10 +63,12 @@ class Vector:
     def as_tuple(self, rounded: bool):
 
         if rounded:
-
             return round(self.x), round(self.y), round(self.z)
         
         return self.x, self.y, self.z
+    def add_tuples_and_vectors(self, other: tuple):
+
+        return round(other[0] + self.x), round(other[1] + self.y), round(other[2] + self.z)
 
     def multiply_colors(self, other):
 
@@ -105,9 +107,16 @@ class Ray:
         self.origin = origin
         self.direction = direction.normalize()
 
+class Material:
+
+    def __init__(self, reflectivity, specular_constant):
+
+        self.reflectivity = reflectivity
+        self.specular_constant = specular_constant
+
 class Sphere:
 
-    def __init__(self, center: Vector, radius, color: Vector, material: str):
+    def __init__(self, center: Vector, radius, color: Vector, material: Material):
 
         self.center = center
         self.radius = radius
@@ -124,13 +133,14 @@ class Light:
 
 class Scene:
 
-    def __init__(self, window: Window, shapes: list, camera: Vector, light: Light, size):
+    def __init__(self, window: Window, shapes: list, camera: Vector, light: Light, size, max_depth):
 
         self.window = window
         self.shapes = shapes
         self.size = size
         self.camera = camera
         self.light = light
+        self.MAX_DEPTH = max_depth
 
     def blit_image(self):
         
@@ -154,46 +164,73 @@ class Scene:
 
                 ray = Ray(self.camera, Vector(x, y, 0) - self.camera)
 
-                self.ray_bounce(j, i, ray, shapes, self.light.color, pixels, 0)
+                color = self.ray_bounce(j, i, ray, shapes, self.light.color, pixels, 0)
+                pixels[j, i] = color.as_tuple(True)
                 
                 print(f"{100 * (i  * self.window.size_x + j) // screen_size}", end="%\r")
     
-    def ray_bounce(self, j: int, i: int, ray: Ray, shapes: list, light_color: Vector, pixels, reflected_colors: list, amount_of_calls: int):
+    def ray_bounce(self, j: int, i: int, ray: Ray, shapes: list, light_color: Vector, pixels, amount_of_calls: int):
 
-        if amount_of_calls == 3:
+        if amount_of_calls == self.MAX_DEPTH:
 
-            pixels[j, i] = pixels[j, i][0] // 3, pixels[j, i][1] // 3, pixels[j, i][2] // 3
-
-            return True
+            return Vector(0, 0, 0)
         
+        hit_position, shape = self.closest_object(ray, shapes)
+        
+        if not hit_position is None:
+
+            color_diffused = self.diffuse_sphere(shape, ray, hit_position, shape.color)
+            color_specular_shaded = self.specular_shading_sphere(shape, ray, hit_position, light_color)
+
+            local_color = color_diffused + color_specular_shaded
+
+            color_final = shape.color + color_diffused + color_specular_shaded
+
+            normal_ray = hit_position - shape.center
+            normal_ray = normal_ray.normalize()
+            reflected_ray = Ray(hit_position + normal_ray, self.reflect_ray(normal_ray, ray.direction).normalize())
+            
+            return (local_color * (1 - shape.material.reflectivity) + self.ray_bounce(j, i, reflected_ray, shapes, color_final, pixels, amount_of_calls + 1) * shape.material.reflectivity)
+                
+        return Vector(0, 0, 0)
+    
+
+    def closest_object(self, ray: Ray, shapes: list):
+        
+        min_distance = -1
+        min_shape = None
+
         for shape in shapes:
 
-            distance = self.does_ray_hit(ray, shape)
+            sphere_to_ray = ray.origin - shape.center
+            b = 2 * ray.direction.dot_product(sphere_to_ray)
+            c = sphere_to_ray.dot_product(sphere_to_ray) - shape.radius ** 2
+            discriminant = b ** 2 - 4 * c
 
-            if distance != None and distance > 0:
+            if discriminant >= 0:
 
-                hit_position = ray.origin + ray.direction * distance
+                distance = (-b - sqrt(discriminant)) / 2
 
-                color_diffused = self.diffuse_sphere(shape, ray, hit_position, shape.color)
-                color_specular_shaded = self.specular_shading_sphere(shape, ray, hit_position, light_color)
-
-                color_final = shape.color * 0 + color_diffused + color_specular_shaded
-                color_final = shape.color.multiply_colors(color_final)
-                reflected_colors.append(color_final)
-                
-                normal_ray = hit_position - shape.center
-                normal_ray = normal_ray.normalize()
-                ray_normalized = ray.normalize() * -1
-                reflected_ray = self.reflect_ray(normal_ray, ray_normalized).normalize()
-
-                self.ray_bounce(j, i, reflected_ray, shapes, color_final, pixels, reflected_colors, amount_of_calls + 1)
-
-        if amount_of_calls > 1:
-
-            pixels[j, i] = pixels[j, i][0] // amount_of_calls, pixels[j, i][1] // amount_of_calls, pixels[j, i][2] // 3
-        
-        return True
+                if min_distance == -1:
     
+                    min_distance = distance
+                    min_shape = shape
+                    continue
+
+                if distance < min_distance and distance > 0:
+
+                    min_distance = distance
+                    min_shape = shape
+
+        if min_shape != None:
+
+            hit_position = ray.origin + ray.direction * min_distance
+
+            return hit_position, min_shape
+        
+        return None, None
+
+
     def does_ray_hit(self, ray: Ray, shape: Sphere):
 
         sphere_to_ray = self.camera - shape.center
@@ -230,7 +267,7 @@ class Scene:
         reflected = self.reflect_ray(normal_vector, light_to_plane)
         light_to_plane *= -1
         halfway_vector = (light_to_plane + viewer_vector).normalize()
-        blinn_term = halfway_vector.dot_product(reflected) ** 32
+        blinn_term = halfway_vector.dot_product(reflected) ** shape.material.specular_constant
 
         return color * blinn_term
 
