@@ -66,10 +66,10 @@ def test_render():
 def test_render_with_reflections():
 
     window = Window(540, 400, "test-2")
-    material = Material(0.5, 16)
+    material = Material(0.5, 32)
     blue_sphere = Sphere(Vector(0.75, -0.1, 1), 0.6, Vector(0, 0, 255), material)
     pink_sphere = Sphere(Vector(-0.75, -0.1, 2.25), 0.6, Vector(125, 80, 125), material)
-    ground_sphere = Sphere(Vector(0, -1000, 1), 1000, Vector(0, 175, 0), material)
+    ground_sphere = Sphere(Vector(0, 1000.5, 1), 1000, Vector(0, 175, 0), material)
     light = Light(Vector(1, window.upside, 0), Vector(255, 255, 255))
     objects = [blue_sphere, pink_sphere, ground_sphere]
     camera = Vector(0, -0.35, -1)
