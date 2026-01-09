@@ -56,10 +56,10 @@ def test_render():
     red_sphere = Sphere(Vector(0, -0.4, 0), 0.1, Vector(255, 0, 0), material)
     yellow_sphere = Sphere(Vector(0, 0, 0), 0.1, Vector(0, 255, 255), material)
     green_sphere = Sphere(Vector(0, 0.4, 0), 0.1, Vector(0, 255, 0), material)
-    light = Light(Vector(1, window.upside, 0), Vector(255, 255, 255))
+    lights = [Light(Vector(1, window.upside, 0), Vector(255, 255, 255))]
     objects = [red_sphere, yellow_sphere, green_sphere]
     camera = Vector(0, 0, -1)
-    scene = Scene(window, objects, camera, light, 0, 3)
+    scene = Scene(window, objects, camera, lights, 0, 3)
     scene.blit_image()
 
 
@@ -69,11 +69,11 @@ def test_render_with_reflections():
     material = Material(0.5, 32)
     blue_sphere = Sphere(Vector(0.75, -0.1, 1), 0.6, Vector(0, 0, 255), material)
     pink_sphere = Sphere(Vector(-0.75, -0.1, 2.25), 0.6, Vector(125, 80, 125), material)
-    ground_sphere = Sphere(Vector(0, 1000.5, 1), 1000, Vector(0, 175, 0), material)
-    light = Light(Vector(1, window.upside, 0), Vector(255, 255, 255))
+    ground_sphere = Sphere(Vector(0, 1000.5, 1), 1000, Vector(0, 0, 0), material)
+    lights = [Light(Vector(1, window.upside, 0), Vector(255, 255, 255)), Light(Vector(-0.5, -0.5, 0), Vector(255, 0, 0))]
     objects = [blue_sphere, pink_sphere, ground_sphere]
     camera = Vector(0, -0.35, -1)
-    scene = Scene(window, objects, camera, light, 0, 8)
+    scene = Scene(window, objects, camera, lights, 0, 8)
     scene.blit_image()
 
 
@@ -85,5 +85,5 @@ test_is_multiplication_working()
 test_is_magnitude_correct()
 test_is_normalization_working()
 test_is_dot_product_working()
-#test_render()
+test_render()
 test_render_with_reflections()
