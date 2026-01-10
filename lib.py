@@ -13,7 +13,6 @@ class Vector:
 
         return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
 
-
     def __sub__(self, other):
 
         return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
@@ -63,9 +62,14 @@ class Vector:
     def as_tuple(self, rounded: bool):
 
         if rounded:
+
             return round(self.x), round(self.y), round(self.z)
         
         return self.x, self.y, self.z
+    
+    def cross_product(self, other):
+
+        return Vector(self.y * other.z - self.z * other.y, self.z * other.x - self.x * other.z, self.x * other.y - self.y * other.x)
 
 class Window:
 
@@ -107,8 +111,11 @@ class Material:
         self.reflectivity = reflectivity
         self.specular_constant = specular_constant
 
+class Shape:
 
-class Sphere:
+    pass
+
+class Sphere(Shape):
 
     def __init__(self, center: Vector, radius, color: Vector, material: Material):
 
@@ -128,7 +135,31 @@ class Light:
         self.position = position
         self.color = color
 
+class Wall(Shape): 
 
+    def __init__(self, left_upper_corner: Vector, left_lower_corner: Vector, right_upper_corner: Vector, right_lower_corner: Vector, color: Vector, material: Material):
+
+        self.left_upper = left_upper_corner
+        self.left_lower = left_lower_corner
+        self.right_upper = right_upper_corner
+        self.right_lower = right_lower_corner
+
+        self.color = color
+        self.material = material
+
+        vector_1 = self.left_upper - self.left_lower
+        vector_2 = self.right_upper - self.left_upper
+
+        self.normal_vector = vector_1.cross_product(vector_2).normalize()
+        
+    def check_hit_point(self, point: Vector):
+        
+        z_elements = [self.left_upper.z, self.left_lower.z, self.right_upper.z, self.right_lower.z]
+        z_min = min(z_elements)
+        z_max = max(z_elements)
+
+        return (point.y <= self.left_upper.y) and (self.left_upper.x <= point.x <= self.right_upper.x) and (z_min <= point.z <= z_max)
+    
 class Scene:
 
     def __init__(self, window: Window, shapes: list, camera: Vector, lights: list, size, max_depth):
@@ -186,8 +217,15 @@ class Scene:
             color_specular_shaded = self.specular_shading_sphere(shape, ray, light, hit_position)
 
             color = color_diffused + color_specular_shaded
+            
+            if isinstance(shape, Sphere):
 
-            normal_ray = hit_position - shape.center
+                normal_ray = hit_position - shape.center
+            
+            elif isinstance(shape, Wall):
+
+                normal_ray = shape.normal_vector
+
             normal_ray = normal_ray.normalize()
             reflected_ray = Ray(hit_position + normal_ray * 1 / 1000 , self.reflect_ray(normal_ray, ray.direction).normalize())
             
@@ -200,31 +238,62 @@ class Scene:
         
         min_distance = -1
         min_shape = None
+        hit_position = None
 
         for shape in shapes:
 
-            sphere_to_ray = ray.origin - shape.center
-            b = 2 * ray.direction.dot_product(sphere_to_ray)
-            c = sphere_to_ray.dot_product(sphere_to_ray) - shape.radius ** 2
-            discriminant = b ** 2 - 4 * c
+            if isinstance(shape, Sphere):
 
-            if discriminant >= 0:
+                sphere_to_ray = ray.origin - shape.center
+                b = 2 * ray.direction.dot_product(sphere_to_ray)
+                c = sphere_to_ray.dot_product(sphere_to_ray) - shape.radius ** 2
+                discriminant = b ** 2 - 4 * c
+
+                if discriminant < 0:
+
+                    continue
 
                 distance = (-b - sqrt(discriminant)) / 2
 
-                if distance > 0:
+                if distance < 0:
 
-                    if min_distance == -1:
-        
-                        min_distance = distance
-                        min_shape = shape
-                        
-                        continue
+                    continue
 
-                    if distance < min_distance:
+            elif isinstance(shape, Wall):
 
-                        min_distance = distance
-                        min_shape = shape
+                direction_and_normal = ray.direction.dot_product(shape.normal_vector)
+
+                if direction_and_normal == 0:
+
+                    continue
+
+                t = (shape.left_upper - ray.origin).dot_product(shape.normal_vector) / direction_and_normal
+
+                if t < 0:
+
+                    continue
+                
+                hit_point = ray.origin + ray.direction * t
+
+                if not shape.check_hit_point(hit_point):
+
+                    continue
+                
+                distance = t
+
+            if min_distance == -1:
+
+                min_distance = distance
+                min_shape = shape
+
+                continue
+
+            if distance < min_distance:
+
+                min_distance = distance
+                min_shape = shape
+
+                continue
 
         if min_shape is not None:
 
@@ -238,15 +307,28 @@ class Scene:
 
         return incident - normal * 2 * incident.dot_product(normal)
     
-    def diffuse_sphere(self, shape: Sphere, ray: Vector, hit_position, color: Vector):
+    def diffuse_sphere(self, shape: Shape, ray: Vector, hit_position, color: Vector):
         
-        normal_vector = shape.center - hit_position
+        if isinstance(shape, Sphere):
 
-        return color * max(normal_vector.normalize().dot_product(ray.direction), 0)
+            normal_vector = (shape.center - hit_position).normalize()
+
+        elif isinstance(shape, Wall):
+
+            normal_vector = shape.normal_vector
+
+        return color * max(normal_vector.dot_product(ray.direction), 0)
 
     def specular_shading_sphere(self, shape: Sphere, ray: Vector, light: Light, hit_position):
-        
-        normal_vector = shape.center - hit_position
+
+        if isinstance(shape, Sphere):
+
+            normal_vector = shape.center - hit_position
+
+        elif isinstance(shape, Wall):
+
+            normal_vector = shape.normal_vector
+
         light_to_plane = hit_position - light.position
         viewer_vector = self.camera - hit_position
 
@@ -258,6 +340,6 @@ class Scene:
         light_to_plane *= -1
         halfway_vector = (light_to_plane + viewer_vector).normalize()
         blinn_term = max(halfway_vector.dot_product(reflected), 0) ** shape.material.specular_constant
-
+    
         return light.color * blinn_term
 
