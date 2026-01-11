@@ -63,42 +63,28 @@ def test_render():
     scene.blit_image()
 
 
-def test_render_with_reflections():
-
-    window = Window(540, 400, "test-2")
-    material = Material(0.5, 32)
-    blue_sphere = Sphere(Vector(0.75, -0.1, 1), 0.6, Vector(0, 0, 255), material)
-    pink_sphere = Sphere(Vector(-0.75, -0.1, 2.25), 0.6, Vector(125, 80, 125), material)
-    ground_sphere = Sphere(Vector(0, 1000.5, 1), 1000, Vector(0, 0, 0), material)
-    lights = [Light(Vector(1, window.upside, 0), Vector(255, 255, 255)), Light(Vector(-0.5, -0.5, 0), Vector(255, 0, 0))]
-    objects = [blue_sphere, pink_sphere, ground_sphere]
-    camera = Vector(0, -0.35, -1)
-    scene = Scene(window, objects, camera, lights, 0, 8)
-    scene.blit_image()
-
 def test_render_with_reflections_and_walls():
 
     window = Window(540, 400, "test-3")
 
     material = Material(0.5, 32)
-    mat_wall_matte = Material(0.1, 8)     
+    mat_wall_matte = Material(0, 8)     
     mat_wall_semi = Material(0.3, 32) 
     mat_wall_mirror = Material(0.7, 64)
 
-    black_wall = Wall(Vector(-3,  2, 4), Vector(-3,  -2, 4), Vector(3, 2, 4), Vector(3, -2, 4), Vector(200, 200, 200), mat_wall_matte)
-    left_wall = Wall(Vector(-3,  2, 4), Vector(-3,  -2, 4), Vector(-3, 2, 0), Vector(-3, -2, 0), Vector(255, 80, 80), mat_wall_semi)
+    black_wall = Wall(Vector(-3,  2, 4), Vector(-3,  -2, 4), Vector(3, 2, 4), Vector(3, -2, 4), Vector(0, 0, 200), mat_wall_matte)
+    left_wall = Wall(Vector(-3,  2, 3), Vector(-3,  -2, 3), Vector(-3, 2, 0), Vector(-3, -2, 0), Vector(255, 80, 80), mat_wall_semi)
     right_wall = Wall(Vector(3,  2, 0), Vector(3,  -2, 0), Vector(3, 2, 4), Vector(3, -2, 4), Vector(200, 200, 200), mat_wall_mirror)
-    floor_wall = Wall(Vector(-3,  -1, 0), Vector(-3,  -1, 4), Vector(3, -1, 0), Vector(3, -1, 4), Vector(120, 120, 120), mat_wall_matte)
+    floor_wall = Wall(Vector(-3,  0.5, 0), Vector(-3,  0.5, 4), Vector(3, 0.5, 0), Vector(3, 0.5, 4), Vector(120, 120, 120), mat_wall_matte)
 
     blue_sphere = Sphere(Vector(0.75, -0.1, 1), 0.6, Vector(0, 0, 255), material)
-    pink_sphere = Sphere(Vector(-0.75, -0.1, 2.25), 0.6, Vector(125, 80, 125), material)
+    pink_sphere = Sphere(Vector(-0.75, -0.1, 2), 0.6, Vector(125, 80, 125), material)
     
-    lights = [Light(Vector(1, window.upside, 0), Vector(255, 255, 255)), Light(Vector(-0.5, -0.5, 0), Vector(255, 0, 0))]
+    lights = [Light(Vector(1, window.upside, 0), Vector(255, 255, 255)), Light(Vector(-0.5, -0.5, 0), Vector(255, 255, 255))]
     objects = [blue_sphere, pink_sphere, black_wall, left_wall, right_wall, floor_wall]
     camera = Vector(0, -0.35, -1)
     scene = Scene(window, objects, camera, lights, 0, 8)
     scene.blit_image()
-
 
 
 

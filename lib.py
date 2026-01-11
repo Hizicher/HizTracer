@@ -154,11 +154,17 @@ class Wall(Shape):
         
     def check_hit_point(self, point: Vector):
         
-        z_elements = [self.left_upper.z, self.left_lower.z, self.right_upper.z, self.right_lower.z]
-        z_min = min(z_elements)
-        z_max = max(z_elements)
+        error_margin = 1 / 1000
+        x_min = min(self.left_upper.x, self.right_upper.x, self.left_lower.x, self.right_lower.x)
+        x_max = max(self.left_upper.x, self.right_upper.x, self.left_lower.x, self.right_lower.x)
 
-        return (point.y <= self.left_upper.y) and (self.left_upper.x <= point.x <= self.right_upper.x) and (z_min <= point.z <= z_max)
+        y_min = min(self.left_upper.y, self.left_lower.y, self.right_upper.y, self.right_lower.y)
+        y_max = max(self.left_upper.y, self.left_lower.y, self.right_upper.y, self.right_lower.y)
+
+        z_min = min(self.left_upper.z, self.left_lower.z, self.right_upper.z, self.right_lower.z)
+        z_max = max(self.left_upper.z, self.left_lower.z, self.right_upper.z, self.right_lower.z)
+
+        return (y_min - error_margin <= point.y <= y_max + error_margin) and (x_min - error_margin <= point.x <= x_max + error_margin) and (z_min - error_margin <= point.z <= z_max + error_margin)
     
 class Scene:
 
@@ -197,7 +203,7 @@ class Scene:
 
                 pixels[j, i] = color.as_tuple(True)
                 
-                print(f"{100 * (i  * self.window.size_x + j) // screen_size}", end="%\r")
+                print(f"{self.window.name}: {100 * (i  * self.window.size_x + j) // screen_size}", end="%\r")
     
     def ray_bounce(self, ray: Ray, shapes: list, amount_of_calls: int):
         
@@ -213,8 +219,8 @@ class Scene:
         
         for light in self.lights:
 
-            color_diffused = self.diffuse_sphere(shape, ray, hit_position, shape.color)
-            color_specular_shaded = self.specular_shading_sphere(shape, ray, light, hit_position)
+            color_diffused = self.diffuse(shape, ray, hit_position, shape.color)
+            color_specular_shaded = self.specular_shade(shape, ray, light, hit_position)
 
             color = color_diffused + color_specular_shaded
             
@@ -230,7 +236,7 @@ class Scene:
             reflected_ray = Ray(hit_position + normal_ray * 1 / 1000 , self.reflect_ray(normal_ray, ray.direction).normalize())
             
             color += self.ray_bounce(reflected_ray, shapes, amount_of_calls + 1)
-                
+     
         return color
     
 
@@ -260,14 +266,16 @@ class Scene:
                     continue
 
             elif isinstance(shape, Wall):
-
+                
+                
                 direction_and_normal = ray.direction.dot_product(shape.normal_vector)
+
 
                 if direction_and_normal == 0:
 
                     continue
 
-                t = (shape.left_upper - ray.origin).dot_product(shape.normal_vector) / direction_and_normal
+                t = (shape.right_lower - ray.origin).dot_product(shape.normal_vector) / direction_and_normal
 
                 if t < 0:
 
@@ -278,7 +286,7 @@ class Scene:
                 if not shape.check_hit_point(hit_point):
 
                     continue
-                
+
                 distance = t
 
             if min_distance == -1:
@@ -307,7 +315,7 @@ class Scene:
 
         return incident - normal * 2 * incident.dot_product(normal)
     
-    def diffuse_sphere(self, shape: Shape, ray: Vector, hit_position, color: Vector):
+    def diffuse(self, shape: Shape, ray: Vector, hit_position, color: Vector):
         
         if isinstance(shape, Sphere):
 
@@ -317,9 +325,13 @@ class Scene:
 
             normal_vector = shape.normal_vector
 
+            if normal_vector.x < 0 or normal_vector.y < 0 or normal_vector.z < 0:
+
+                normal_vector *= -1
+                
         return color * max(normal_vector.dot_product(ray.direction), 0)
 
-    def specular_shading_sphere(self, shape: Sphere, ray: Vector, light: Light, hit_position):
+    def specular_shade(self, shape: Sphere, ray: Vector, light: Light, hit_position):
 
         if isinstance(shape, Sphere):
 
