@@ -73,7 +73,7 @@ class Vector:
 
 class Window:
 
-    def __init__(self, size_x: int, size_y: int, name: str):
+    def __init__(self, size_x: int, size_y: int, name: str, color: tuple):
 
         self.size_x = size_x
         self.size_y = size_y
@@ -94,7 +94,7 @@ class Window:
 
             self.filename = name
             
-            self.img = Image.new("RGB", (size_x, size_y), (0, 0, 0))
+            self.img = Image.new("RGB", (size_x, size_y), color)
             self.img.save(f"static/{name}.png")
 
 class Ray:
