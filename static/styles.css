@@ -1,0 +1,19 @@
+nav .navbar-brand
+{
+    font-size: xx-large;
+}
+
+nav .navbar-brand .blue
+{
+    color:blue;
+}
+
+nav .navbar-brand .green
+{
+    color:green;
+}
+
+nav .navbar-brand .red
+{
+    color: red;
+}

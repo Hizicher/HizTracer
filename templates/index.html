@@ -3,20 +3,223 @@
 <html lang="en">
 
     <head>
-        <meta name="viewport" content="initial-scale=1, width=device-width">
-        <title>Raytracer</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link href="/static/styles.css" rel = "stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <title>Hiztracer</title>
     </head>
 
     <body>
-        <form action="/login" method="post">
-            <div>
-                <input autocomplete="off" autofocus name="width" placeholder="Image width" type="text">
+
+        
+        <nav class="navbar navbar-expand-md navbar-light bg-light border-bottom"> 
+
+            <div class="container-fluid">
+
+                <a class="navbar-brand fw-bold" href="#">Raytracer Demo</a> 
+                
+                <button type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" class="navbar-toggler" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle Navigation"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+
+                    <ul class="navbar-nav">
+
+                        <li class="nav-item active">
+                             <a class="nav-link" href="#scene">Scene</a>
+                        </li>
+
+                        <li class="nav-item active">
+                            <a class="nav-link" href="#render">Render</a>
+                        </li>
+
+                        <li class="nav-item active">
+                             <a class="nav-link" href="#about">About</a>
+                        </li>
+                    </ul>
+
+                </div>
+
             </div>
-            <div>
-                <input name="height" placeholder="Image height" type="text">
+
+        </nav>
+
+        <section id="scene" class="container-my-4">
+
+            <h2>Scene</h2>
+
+            <div class="row mb-3">
+
+                    <label>Dimensions</label>
+
+                <div class="col-md-2">
+
+                    <input type="number" class="form-control" placeholder="Width" id="width">
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <input type="number" class="form-control" placeholder="Height" id="Height">
+
+                </div>
+
             </div>
-            <button type="submit">Generate Raytraced Image</button>
-        </form>
+
+            <div class="row mb-3">
+
+                <label>Camera Position</label>
+
+                <div class="col-md-2">
+
+                    <input type="text" class="form-control" placeholder="(x, y, z)" id="cameraPosition">
+
+                </div>
+
+
+            </div>
+
+            <div class="row mb-3">
+
+                <label>Add Spheres</label>
+
+                <div class="col-md-2">
+
+                    <input type="number" class="form-control" placeholder="Amount of Spheres" id="sphereAmount">
+
+                </div>
+
+            </div>
+
+            <div class="row mb-3" id ="sphereContainer">
+
+
+            </div>
+
+            <div class="row mb-3">
+
+                <label>Add Walls</label>
+
+                <div class="col-md-2">
+
+                    <input type="number" class="form-control" placeholder="Amount of Walls" id="wallAmount">
+
+                </div>
+
+            </div>
+
+            <div class="row mb-3" id ="wallContainer">
+
+
+            </div>
+
+            <div class="row mb-3">
+
+                <label>Add Light</label>
+
+                <div class="col-md-2">
+
+                    <input type="number" class="form-control" placeholder="Amount of Lights" id="lightAmount">
+
+                </div>
+
+            </div>
+
+            <div class="row mb-3" id ="lightContainer">
+
+
+            </div>
+
+        </section>
+
+        <script>
+
+            document.addEventListener('DOMContentLoaded', function() {
+
+                let amountSphere = document.getElementById("sphereAmount");
+                let containerSphere = document.getElementById("sphereContainer")
+
+                amountSphere.addEventListener('input', function() {
+
+                    containerSphere.innerHTML = '';
+                    let countSphere = Number(amountSphere.value);
+
+                    if (countSphere > 0) {
+
+                        for(let i = 1; i <= countSphere; i++) {
+
+                        containerSphere.innerHTML += `<div class="col-md-2">
+                                                <h5>Sphere ${i}</h5>
+                                                <input type="text" class="form-control" placeholder="Center (x, y, z)">
+                                                <input type="number" step="0.01" class="form-control" placeholder="Radius">
+                                                <input type="number" class="form-control" placeholder="Color (R, G, B)">
+                                                <input type="number" step="0.01" class="form-control" placeholder="Reflectivity (up to 1.00)">
+                                                <input type="number" class="form-control" placeholder="Specular Shading Constant">
+                                                </div>`
+
+                        }
+
+                    }
+                });
+
+                let amountWall = document.getElementById("wallAmount");
+                let containerWall = document.getElementById("wallContainer");
+
+                amountWall.addEventListener('input', function() {
+
+                    containerWall.innerHTML = '';
+                    let countWall = Number(amountWall.value);
+
+                    if (countWall > 0) {
+
+                        for(let i = 1; i <= countWall; i++) {
+
+                        containerWall.innerHTML += `<div class="col-md-2">
+                                                <h5>Wall ${i}</h5>
+                                                <input type="text" class="form-control" placeholder="Left Upper (x, y, z)">
+                                                <input type="text" class="form-control" placeholder="Left Lower(x, y, z)">
+                                                <input type="text" class="form-control" placeholder="Right Upper (x, y, z)">
+                                                <input type="text" class="form-control" placeholder="Right Lower (x, y, z)">
+                                                <input type="number" class="form-control" placeholder="Color (R, G, B)">
+                                                <input type="number" step="0.01" class="form-control" placeholder="Reflectivity (up to 1)">
+                                                <input type="number" class="form-control" placeholder="Specular Shading Constant">
+                                                </div>`
+
+                        }
+
+                    }
+                });
+
+                let amountLight = document.getElementById("lightAmount");
+                let containerLight = document.getElementById("lightContainer");
+
+                amountLight.addEventListener('input', function() {
+
+                    containerLight.innerHTML = '';
+                    let countLight = Number(amountLight.value);
+
+                    if (countLight > 0) {
+
+                        for(let i = 1; i <= countLight; i++) {
+
+                        containerLight.innerHTML += `<div class="col-md-2">
+                                                <h5>Light ${i}</h5>
+                                                <input type="text" class="form-control" placeholder="Position (x, y, z)">
+                                                <input type="number" class="form-control" placeholder="Color (R, G, B)">
+                                                </div>`
+
+                        }
+
+                    }
+                });
+
+                
+            });
+
+
+        </script>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     </body>
 
 </html>

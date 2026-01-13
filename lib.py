@@ -19,6 +19,10 @@ class Vector:
     
     def __truediv__(self, other):
 
+        if other == 0:
+
+            return 0
+
         try:
 
             new_x = self.x / other
@@ -29,7 +33,7 @@ class Vector:
         
         except:
 
-            raise ValueError("A vector may merely be divided by a scalar")
+            raise ValueError(f"A vector may merely be divided by a scalar, so dividing with {other} does not work")
 
     def __mul__(self, other):
 
@@ -43,7 +47,7 @@ class Vector:
 
         except:
 
-            raise ValueError("A vector may merely be multiplied with a scalar")
+            raise ValueError(f"A vector may merely be multiplied with a scalar")
 
     def magnitude(self):
 
@@ -73,12 +77,13 @@ class Vector:
 
 class Window:
 
-    def __init__(self, size_x: int, size_y: int, name: str, color: tuple):
+    def __init__(self, size_x: int, size_y: int, name: str, color: Vector):
 
         self.size_x = size_x
         self.size_y = size_y
         self.name = name
         self.aspect_ratio = float(self.size_x / self.size_y)
+        self.color = color
 
         self.left_side = -1
         self.right_side = 1
@@ -94,7 +99,7 @@ class Window:
 
             self.filename = name
             
-            self.img = Image.new("RGB", (size_x, size_y), color)
+            self.img = Image.new("RGB", (size_x, size_y), color.as_tuple(True))
             self.img.save(f"static/{name}.png")
 
 class Ray:
@@ -113,16 +118,19 @@ class Material:
 
 class Shape:
 
-    pass
+    def __init__(self, color, material):
+
+        self.color = color
+        self.material = material
+
 
 class Sphere(Shape):
 
     def __init__(self, center: Vector, radius, color: Vector, material: Material):
 
+        super().__init__(color=color, material=material)
         self.center = center
         self.radius = radius
-        self.color = color
-        self.material = material
 
     def __str__(self):
 
@@ -139,13 +147,12 @@ class Wall(Shape):
 
     def __init__(self, left_upper_corner: Vector, left_lower_corner: Vector, right_upper_corner: Vector, right_lower_corner: Vector, color: Vector, material: Material):
 
+        super().__init__(color=color, material=material)
+
         self.left_upper = left_upper_corner
         self.left_lower = left_lower_corner
         self.right_upper = right_upper_corner
         self.right_lower = right_lower_corner
-
-        self.color = color
-        self.material = material
 
         vector_1 = self.left_upper - self.left_lower
         vector_2 = self.right_upper - self.left_upper
@@ -209,13 +216,13 @@ class Scene:
         
         if amount_of_calls == self.MAX_DEPTH:
 
-            return Vector(0, 0, 0)
+            return self.window.color
         
         hit_position, shape = self.closest_object(ray, shapes)
         
         if hit_position is None:
 
-            return Vector(0, 0, 0)
+            return self.window.color
         
         for light in self.lights:
 

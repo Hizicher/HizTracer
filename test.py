@@ -51,7 +51,7 @@ def test_is_dot_product_working():
 
 def test_render():
 
-    window = Window(540, 400, "test-1", (0, 0, 0))
+    window = Window(540, 400, "test-1", Vector(0, 0, 0))
     material = Material(0.5, 32)
     red_sphere = Sphere(Vector(0, -0.4, 0), 0.1, Vector(255, 0, 0), material)
     yellow_sphere = Sphere(Vector(0, 0, 0), 0.1, Vector(0, 255, 255), material)
@@ -65,13 +65,13 @@ def test_render():
 
 def test_render_with_reflections_and_walls():
 
-    window = Window(540, 400, "test-3", (0, 0, 0))
+    window = Window(540, 400, "test-3", Vector(80, 80, 110))
 
     material = Material(0.5, 32)
     mat_wall_matte = Material(0, 8)     
     mat_wall_semi = Material(0.3, 32) 
     mat_wall_mirror = Material(0.7, 64)
-    Wall()
+
     black_wall = Wall(Vector(-3,  2, 4), Vector(-3,  -2, 4), Vector(3, 2, 4), Vector(3, -2, 4), Vector(0, 0, 200), mat_wall_matte)
     left_wall = Wall(Vector(-3,  2, 4), Vector(-3,  -2, 4), Vector(-3, 2, 0), Vector(-3, -2, 0), Vector(255, 80, 80), mat_wall_semi)
     right_wall = Wall(Vector(3,  2, 0), Vector(3,  -2, 0), Vector(3, 2, 4), Vector(3, -2, 4), Vector(200, 200, 200), mat_wall_mirror)
@@ -82,7 +82,7 @@ def test_render_with_reflections_and_walls():
     
     lights = [Light(Vector(1, window.upside, 0), Vector(255, 255, 255)), Light(Vector(-0.5, -0.5, 0), Vector(255, 255, 255))]
     objects = [blue_sphere, pink_sphere, black_wall, left_wall, right_wall, floor_wall]
-    camera = Vector(0, -0.35, -1)
+    camera = Vector(0, 0, -1)
     scene = Scene(window, objects, camera, lights, 0, 8)
     scene.blit_image()
 
