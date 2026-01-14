@@ -9,10 +9,10 @@
         <link href="/static/styles.css" rel = "stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
         <title>Hiztracer</title>
+
     </head>
 
     <body>
-
         
         <nav class="navbar navbar-expand-md navbar-light bg-light border-bottom"> 
 
@@ -48,96 +48,166 @@
 
             <h2>Scene</h2>
 
-            <div class="row mb-3">
+            <form method="POST" action="/">
 
-                    <label>Dimensions</label>
+                <div class="row mb-3">
 
-                <div class="col-md-2">
+                        <label>Dimensions and Color of the Raytraced Image</label>
 
-                    <input type="number" class="form-control" placeholder="Width" id="width">
+                    <div class="col-md-2">
+                        <label>Width</label>
+                        <input type="number" name="width" value="540" min="1" class="form-control" placeholder="Width" id="width" required>
 
-                </div>
+                    </div>
 
-                <div class="col-md-2">
+                    <div class="col-md-2">
+                        <label>Height</label>
+                        <input type="number" name="height" value="400" min="1" class="form-control" placeholder="Height" id="Height" required>
 
-                    <input type="number" class="form-control" placeholder="Height" id="Height">
-
-                </div>
-
-            </div>
-
-            <div class="row mb-3">
-
-                <label>Camera Position</label>
-
-                <div class="col-md-2">
-
-                    <input type="text" class="form-control" placeholder="(x, y, z)" id="cameraPosition">
-
-                </div>
+                    </div>
 
 
-            </div>
+                    <div class="col-md-2">
+                        <label>Color (Background)</label>
+                        <input type="text" name="sky_color" value="(0, 0, 0)" class="form-control" placeholder="Sky Color (R, G, B)" id="skyColor" required>
 
-            <div class="row mb-3">
-
-                <label>Add Spheres</label>
-
-                <div class="col-md-2">
-
-                    <input type="number" class="form-control" placeholder="Amount of Spheres" id="sphereAmount">
+                    </div>
 
                 </div>
 
-            </div>
+                <div class="row mb-3">
 
-            <div class="row mb-3" id ="sphereContainer">
+                    <label>Camera Position</label>
 
+                    <div class="col-md-2">
 
-            </div>
+                        <input type="text" name="camera_position" value="(0, 0, -1)" class="form-control" placeholder="(x, y, z)" id="cameraPosition" required>
 
-            <div class="row mb-3">
+                    </div>
 
-                <label>Add Walls</label>
-
-                <div class="col-md-2">
-
-                    <input type="number" class="form-control" placeholder="Amount of Walls" id="wallAmount">
 
                 </div>
 
-            </div>
+                <div class="row mb-3">
 
-            <div class="row mb-3" id ="wallContainer">
+                    <label>Add Spheres</label>
 
+                    <div class="col-md-2">
 
-            </div>
+                        <input type="number" name="amount_of_spheres" value="1" min="0" class="form-control" placeholder="Amount of Spheres" id="sphereAmount" required>
 
-            <div class="row mb-3">
-
-                <label>Add Light</label>
-
-                <div class="col-md-2">
-
-                    <input type="number" class="form-control" placeholder="Amount of Lights" id="lightAmount">
+                    </div>
 
                 </div>
 
-            </div>
-
-            <div class="row mb-3" id ="lightContainer">
+                <div class="row mb-3" id ="sphereContainer">
 
 
-            </div>
+                </div>
 
+                <div class="row mb-3">
+
+                    <label>Add Walls</label>
+
+                    <div class="col-md-2">
+
+                        <input type="number" name="amount_of_walls" value="1" min="0" class="form-control" placeholder="Amount of Walls" id="wallAmount" required>
+
+                    </div>
+
+                </div>
+
+                <div class="row mb-3" id ="wallContainer">
+
+
+                </div>
+
+                <div class="row mb-3">
+
+                    <label>Add Light</label>
+
+                    <div class="col-md-2">
+
+                        <input type="number" name="amount_of_lights" value="1" min="1" class="form-control" placeholder="Amount of Lights" id="lightAmount" required>
+
+                    </div>
+
+                </div>
+
+                <div class="row mb-3" id ="lightContainer">
+
+
+                </div>
+
+                <button type="submit" class="btn btn-primary mb-3">
+                    Render Scene
+                </button>
+
+            </form>
+
+
+        </section>
+
+        <section id="render" class="container-my-4 mb-3">
+
+            <h2>Render</h2>
+
+            {% if error %}
+
+                <div class="alert alert-danger">{{ error }}</div>
+
+            {% endif %}
+
+
+            {% if not render_start %}
+
+                <p>Default Scene</p>
+                <img src="{{ url_for('static', filename='default.png') }}">
+            
+            {% else %}
+
+                <h4>Rendering...</h4>
+                <div class="progress">
+                    <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+                </div>
+
+                <div id="rendered-image" src="static/image.png"></div>
+                
+            {% endif %}
         </section>
 
         <script>
 
+            setInterval(async () => {
+
+                let response = await fetch("/progress");
+                let data = await response.json();
+
+                if(data!=0){
+
+                    document.getElementById("progress-bar").style.width = data.width + "%";
+                }
+
+            }, 500);
+
             document.addEventListener('DOMContentLoaded', function() {
 
                 let amountSphere = document.getElementById("sphereAmount");
-                let containerSphere = document.getElementById("sphereContainer")
+                let containerSphere = document.getElementById("sphereContainer");
+
+                containerSphere.innerHTML = `<div class="col-md-2">
+                                                <h5>Sphere 1</h5>
+                                                <label>Coordinates for the Center</label>
+                                                <input type="text" name="sphere_center[]" value="(0.75, -0.1, 1)" class="form-control" placeholder="Center (x, y, z)" required>
+                                                <label>Radius</label>
+                                                <input type="number" name="sphere_radius[]" value="0.6" step="0.1" class="form-control" placeholder="Radius" required>
+                                                <label>Color</label>
+                                                <input type="text" name="sphere_color[]" value="(0, 0, 255)" class="form-control" placeholder="Color (R, G, B)" required>
+                                                <label>Reflectivity</label>
+                                                <input type="number" name="sphere_reflectivity[]" value="0.5" min="0" step="0.1" class="form-control" placeholder="Reflectivity (up to 1.00)" required>
+                                                <label>Specular Shading Constant</label>
+                                                <input type="number" name="sphere_specular_constant[]" value="32" min="0" class="form-control" placeholder="Specular Shading Constant" required>
+                                                </div>`;
 
                 amountSphere.addEventListener('input', function() {
 
@@ -150,12 +220,17 @@
 
                         containerSphere.innerHTML += `<div class="col-md-2">
                                                 <h5>Sphere ${i}</h5>
-                                                <input type="text" class="form-control" placeholder="Center (x, y, z)">
-                                                <input type="number" step="0.01" class="form-control" placeholder="Radius">
-                                                <input type="number" class="form-control" placeholder="Color (R, G, B)">
-                                                <input type="number" step="0.01" class="form-control" placeholder="Reflectivity (up to 1.00)">
-                                                <input type="number" class="form-control" placeholder="Specular Shading Constant">
-                                                </div>`
+                                                <label>Coordinates for the Center</label>
+                                                <input type="text" name="sphere_center[]" class="form-control" placeholder="Center (x, y, z)" required>
+                                                <label>Radius</label>
+                                                <input type="number" name="sphere_radius[]" step="0.1" class="form-control" placeholder="Radius" required>
+                                                <label>Color</label>
+                                                <input type="text" name="sphere_color[]" class="form-control" placeholder="Color (R, G, B)" required>
+                                                <label>Reflectivity</label>
+                                                <input type="number" name="sphere_reflectivity[]" min="0" step="0.1" class="form-control" placeholder="Reflectivity (up to 1.00)" required>
+                                                <label>Specular Shading Constant</label>
+                                                <input type="number" name="sphere_specular_constant[]" min="0" class="form-control" placeholder="Specular Shading Constant" required>
+                                                </div>`;
 
                         }
 
@@ -164,6 +239,24 @@
 
                 let amountWall = document.getElementById("wallAmount");
                 let containerWall = document.getElementById("wallContainer");
+
+                containerWall.innerHTML = `<div class="col-md-2">
+                                                <h5>Wall 1</h5>
+                                                <label>Upper Left Corner's Coordinates</label>
+                                                <input type="text" name="left_upper_corner[]" value="(-3,  0.5, 0)" class="form-control" placeholder="Left Upper (x, y, z)" required>
+                                                <label>Lower Left Corner's Coordinates</label>
+                                                <input type="text" name="left_lower_corner[]" value="(-3,  0.5, 4)" class="form-control" placeholder="Left Lower (x, y, z)" required>
+                                                <label>Upper Right Corner's Coordinates</label>
+                                                <input type="text" name="right_upper_corner[]" value="(3, 0.5, 0)" class="form-control" placeholder="Right Upper (x, y, z)" required>
+                                                <label>Lower Right Corner's Coordinates</label>
+                                                <input type="text" name="right_lower_corner[]" value="(3, 0.5, 4)" class="form-control" placeholder="Right Lower (x, y, z)" required>
+                                                <label>Color</label>
+                                                <input type="text" name="wall_color[]" value="(120, 120, 120)" class="form-control" placeholder="Color (R, G, B)" required>
+                                                <label>Reflectivity</label>
+                                                <input type="number" name="wall_reflectivity[]" value="0" min="0" max="1" step="0.1" class="form-control" placeholder="Reflectivity (up to 1)" required>
+                                                <label>Specular Shading Constant</label>
+                                                <input type="number" name="wall_specular_constant[]" value="8" min="0" class="form-control" placeholder="Specular Shading Constant" required>
+                                                </div>`;
 
                 amountWall.addEventListener('input', function() {
 
@@ -176,14 +269,21 @@
 
                         containerWall.innerHTML += `<div class="col-md-2">
                                                 <h5>Wall ${i}</h5>
-                                                <input type="text" class="form-control" placeholder="Left Upper (x, y, z)">
-                                                <input type="text" class="form-control" placeholder="Left Lower(x, y, z)">
-                                                <input type="text" class="form-control" placeholder="Right Upper (x, y, z)">
-                                                <input type="text" class="form-control" placeholder="Right Lower (x, y, z)">
-                                                <input type="number" class="form-control" placeholder="Color (R, G, B)">
-                                                <input type="number" step="0.01" class="form-control" placeholder="Reflectivity (up to 1)">
-                                                <input type="number" class="form-control" placeholder="Specular Shading Constant">
-                                                </div>`
+                                                <label>Upper Left Corner's Coordinates</label>
+                                                <input type="text" name="left_upper_corner[]" class="form-control" placeholder="Left Upper (x, y, z)" required>
+                                                <label>Lower Left Corner's Coordinates</label>
+                                                <input type="text" name="left_lower_corner[]" class="form-control" placeholder="Left Lower (x, y, z)" required>
+                                                <label>Upper Right Corner's Coordinates</label>
+                                                <input type="text" name="right_upper_corner[]" class="form-control" placeholder="Right Upper (x, y, z)" required>
+                                                <label>Lower Right Corner's Coordinates</label>
+                                                <input type="text" name="right_lower_corner[]" class="form-control" placeholder="Right Lower (x, y, z)" required>
+                                                <label>Color</label>
+                                                <input type="text" name="wall_color[]" class="form-control" placeholder="Color (R, G, B)" required>
+                                                <label>Reflectivity</label>
+                                                <input type="number" name="wall_reflectivity[]" min="0" max="1" step="0.1" class="form-control" placeholder="Reflectivity (up to 1)" required>
+                                                <label>Specular Shading Constant</label>
+                                                <input type="number" name="wall_specular_constant[]" min="0" class="form-control" placeholder="Specular Shading Constant" required>
+                                                </div>`;
 
                         }
 
@@ -192,6 +292,14 @@
 
                 let amountLight = document.getElementById("lightAmount");
                 let containerLight = document.getElementById("lightContainer");
+
+                containerLight.innerHTML = `<div class="col-md-2">
+                                                <h5>Light 1</h5>
+                                                <label>Position Coordinates</label>
+                                                <input type="text" name="light_position[]" value="(-0.5, -0.5, 0)" class="form-control" placeholder="Position (x, y, z)" required>
+                                                <label>Color</label>
+                                                <input type="text" name="light_color[]" value="(255, 255, 255)" class="form-control" placeholder="Color (R, G, B)" required>
+                                                </div>`;
 
                 amountLight.addEventListener('input', function() {
 
@@ -204,8 +312,10 @@
 
                         containerLight.innerHTML += `<div class="col-md-2">
                                                 <h5>Light ${i}</h5>
-                                                <input type="text" class="form-control" placeholder="Position (x, y, z)">
-                                                <input type="number" class="form-control" placeholder="Color (R, G, B)">
+                                                <label>Position Coordinates</label>
+                                                <input type="text" name="light_position[]" class="form-control" placeholder="Position (x, y, z)" required>
+                                                <label>Color</label>
+                                                <input type="text" name="light_color[]" class="form-control" placeholder="Color (R, G, B)" required>
                                                 </div>`
 
                         }

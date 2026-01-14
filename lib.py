@@ -19,10 +19,6 @@ class Vector:
     
     def __truediv__(self, other):
 
-        if other == 0:
-
-            return 0
-
         try:
 
             new_x = self.x / other
@@ -175,13 +171,13 @@ class Wall(Shape):
     
 class Scene:
 
-    def __init__(self, window: Window, shapes: list, camera: Vector, lights: list, size, max_depth):
+    def __init__(self, window: Window, shapes: list, camera: Vector, lights: list, max_depth):
 
         self.window = window
         self.shapes = shapes
-        self.size = size
         self.camera = camera
         self.lights = lights
+        self.progress = 0
         self.MAX_DEPTH = max_depth
 
     def blit_image(self):
@@ -210,7 +206,10 @@ class Scene:
 
                 pixels[j, i] = color.as_tuple(True)
                 
-                print(f"{self.window.name}: {100 * (i  * self.window.size_x + j) // screen_size}", end="%\r")
+                self.progress = 100 * (i  * self.window.size_x + j) // screen_size
+                print(f"{self.window.name}: {self.progress}", end="%\r")
+        
+        self.progress = 0
     
     def ray_bounce(self, ray: Ray, shapes: list, amount_of_calls: int):
         
