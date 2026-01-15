@@ -6,6 +6,7 @@
 
 HizTracer is a Python-based ray tracing application with a web interface that allows users to generate custom 3D ray-traced images. Through its interactive website, users can design their own scenes by placing objects such as spheres and walls, adjusting materials, and configuring light sources. The goal of this project is to combine a mathematically driven ray tracing engine with a user-friendly web experience.
 
+![Feature Example](static/test-3.png)
 ---
 
 ## Features
@@ -15,8 +16,6 @@ HizTracer is a Python-based ray tracing application with a web interface that al
 * Recursive ray tracing with reflections
 * Real-time rendering progress feedback
 * Server-side validation for secure input handling
-
-![Feature Example](static/test-3.png)
 
 ---
 
@@ -64,7 +63,7 @@ Upon submission, the form data is sent to `app.py` using a POST request. Althoug
 
 Once valid input is received, a separate rendering thread is started. This allows the rendering process to update a progress attribute, which is periodically queried by the frontend using JavaScript’s `setInterval()` function. As a result, users can see both rendering progress and the partially updated image in real time. After rendering is complete, users can submit a new scene without reloading the page.
 
-![Web Interface](test-4.png)
+![Web Interface](static/test-4.png)
 
 ---
 
@@ -96,7 +95,7 @@ http://127.0.0.1:5000
 
 You can open this address in your browser to start using HizTracer.
 
-![Setup Example](test-1.png)
+![Setup Example](static/test-1.png)
 
 ---
 
