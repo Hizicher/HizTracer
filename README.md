@@ -16,7 +16,7 @@ HizTracer is a Python-based ray tracing application with a web interface that al
 * Real-time rendering progress feedback
 * Server-side validation for secure input handling
 
-![Feature Example](test-3.png)
+![Feature Example](static/test-3.png)
 
 ---
 
