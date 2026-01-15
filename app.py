@@ -1,15 +1,26 @@
 from flask import Flask, redirect, jsonify, request, render_template, url_for
 from lib import Vector, Window, Sphere, Scene, Light, Material, Wall
+from threading import Thread
 
 app = Flask(__name__)
 
-actual_scene = None
+actual_scene = None                 # For a customer-ready approach a task queue is needed, but for only this demo we use a global variable
 
+# Does the server sided input validation and renders the right type of template depending on if there is an error or the rendering has started
 @app.route("/", methods = ["GET", "POST"])
 def index():
 
+    render_start = False
+    global actual_scene
+
+    if request.method == "GET":
+
+        actual_scene = None         # So that hen the demanded raytracing is done the program does not use the old scene 
+
+
     if request.method == "POST":
 
+        # Although index.html has input validation we have to check on server if the user maliciously changed the HTML code and tries to submit invalid form of data
         if not request.form:
 
             return render_template("index.html", error="Submit a valid form!")
@@ -129,11 +140,7 @@ def index():
                 
 
                 if not (left_upper and left_lower and right_upper and right_lower and color):
-                    print(left_uppers[i])
-                    print(left_lowers[i])
-                    print(right_uppers[i])
-                    print(right_lowers[i])
-                    print(wall_colors[i])
+
                     return render_template("index.html", error="Enter the corner positions and colors of the walls in their right format.")
 
                 scene_objects.append(Wall(left_upper, left_lower, right_upper, right_lower, color, Material(reflectivity, specular)))
@@ -170,39 +177,47 @@ def index():
 
             scene_lights.append(Light(position, color))
         
-        try:
+        try: # In case there is a missed edge case after all we make it sure so that the program does not crash
 
             actual_scene = Scene(Window(window_width, window_height, "image", sky_color), scene_objects, camera_position, scene_lights, 8)
-            actual_scene.blit_image()
-            render_template("index.html", render_start=True)
-            actual_scene = None
-
+            Thread(target=start_render).start() # We need a thread for sending the progress amount simultaneously to the JavaScript
+            
+            render_start = True
 
         except:
 
             return render_template("index.html", error="An unexpected error occured while rendering the scene, please check your parameters.")
 
-    return render_template("index.html")
-
-app.route("/progress")
+    return render_template("index.html", render_start=render_start)
+    
+# Sends the progress percentage to JavaScript
+@app.route("/progress")
 def progress():
 
     global actual_scene
-    if actual_scene:
+    if not actual_scene is None:
 
-        return jsonify({"progress": actual_scene.progress})
+        return jsonify(progress=actual_scene.progress)
     
-    return jsonify({"progress": 0})
+    return jsonify(progress=0)
 
+
+def start_render():
+
+    global actual_scene
+    actual_scene.blit_image()
+
+
+# As the user enters the vectors as strings, this function test if those tuples are in the right format to be vectors
 def is_valid_tuple(tuple_string: str, is_color = None):
 
     if (tuple_string[0] == "(" and tuple_string[-1] == ")" and tuple_string.count(", ") == 2):
 
-        try:
+        try: # If the elements inside the string cannot be translated into floats, the program will move on to except.
 
             tuple_string = tuple_string[1:len(tuple_string) - 1]
             elements = tuple_string.split(", ")
-            elements = [float(element) for element in elements]
+            elements = [float(element) for element in elements] 
 
             if is_color:
 

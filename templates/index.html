@@ -8,7 +8,7 @@
 
         <link href="/static/styles.css" rel = "stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-        <title>Hiztracer</title>
+        <title>HizTracer</title>
 
     </head>
 
@@ -18,12 +18,16 @@
 
             <div class="container-fluid">
 
-                <a class="navbar-brand fw-bold" href="#">Raytracer Demo</a> 
+                <a class="navbar-brand fw-bold" href="#">HizTracer</a> 
                 
                 <button type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" class="navbar-toggler" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle Navigation"><span class="navbar-toggler-icon"></span></button>
                 <div class="collapse navbar-collapse" id="navbarNav">
 
                     <ul class="navbar-nav">
+
+                        <li class="nav-item active">
+                             <a class="nav-link" href="#about">About</a>
+                        </li>
 
                         <li class="nav-item active">
                              <a class="nav-link" href="#scene">Scene</a>
@@ -33,9 +37,6 @@
                             <a class="nav-link" href="#render">Render</a>
                         </li>
 
-                        <li class="nav-item active">
-                             <a class="nav-link" href="#about">About</a>
-                        </li>
                     </ul>
 
                 </div>
@@ -43,6 +44,12 @@
             </div>
 
         </nav>
+
+        <section id="about" class="container-my-4">
+            <h2>HizTracer: A Demo for Rendering Raytraced Images</h2>
+
+            <p>HizTracer is a demo for generating raytraced images with spheres, walls and lights of the user's choice. Additional to such objects, the user has also the ability to choose their camera position and image size. For more information please visit <a href="{{ url_for('static', filename='README.md') }}">HizTracer's user manual</a>.</p>
+        </section>
 
         <section id="scene" class="container-my-4">
 
@@ -154,47 +161,66 @@
 
             {% if error %}
 
-                <div class="alert alert-danger">{{ error }}</div>
+                <div class="alert alert-danger mb-3">{{ error }}</div>
 
             {% endif %}
 
+            <p id="status">{% if not render_start %}Example Image Below!{% else %}Rendering...{% endif %}</p>
+            <div class="progress">
+                <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+            </div>
+            <img id="page_image" src="{{ url_for('static', filename='default.png') }}">
 
-            {% if not render_start %}
 
-                <p>Default Scene</p>
-                <img src="{{ url_for('static', filename='default.png') }}">
-            
-            {% else %}
-
-                <h4>Rendering...</h4>
-                <div class="progress">
-                    <div class="progress-bar" id="progress-bar" style="width:0%"></div>
-                </div>
-
-                <div id="rendered-image" src="static/image.png"></div>
-                
-            {% endif %}
         </section>
 
         <script>
+            // Checks the progress of the rendering every 500 ms
+            setInterval(() => {
+                 
+                fetch("/progress").then(r => r.text()).then(t => {
 
-            setInterval(async () => {
+                    // Checking if the sent data in the right JSON format
+                    try {
 
-                let response = await fetch("/progress");
-                let data = await response.json();
+                        let currentStatus = document.getElementById("status"); // Changes the status depending if the program is still rendering or not
+                        let img = document.getElementById("page_image"); // To change the default image to rendered image
+                        let bar = document.getElementById("progress-bar") // To update the progress bar simulatenously with the rendering progress data gotten
 
-                if(data!=0){
+                        const data = JSON.parse(t);
+                        if(data.progress < 100 && data.progress > 0) { // Checks if the data.progress > 0 so that the program does not show rendering when scene is reset
 
-                    document.getElementById("progress-bar").style.width = data.width + "%";
-                }
+                            bar.style.width = data.progress + "%";
+                            currentStatus.innerHTML = "Rendering ... | " + data.progress + " % done.";
+                            img.src = "static/image.png?t=" + Date.now();
+                        }
+
+                        if(data.progress == 100) {
+
+                            img.src = "static/image.png?t=" + Date.now(); // So that the browser downloads image.png again as it is renewed
+                            currentStatus.innerHTML = ''; // Deletes the "Rendering.." text when rendering is done
+                            bar.style.width = "0%"; // Resets the bar
+
+                        }
+                        
+                    }
+
+                    catch(e) {
+
+                        console.log("JSON data not found: ", t) // Debugs the invalid JSON data
+                    }
+                        
+                });
 
             }, 500);
 
             document.addEventListener('DOMContentLoaded', function() {
 
+                // JS gets data from HTML to see how many spheres the user wants so that it can print out that many forms, the same goes for the walls and the lights
                 let amountSphere = document.getElementById("sphereAmount");
                 let containerSphere = document.getElementById("sphereContainer");
 
+                // Default values when entered on the website, the same goes for the walls and the lights
                 containerSphere.innerHTML = `<div class="col-md-2">
                                                 <h5>Sphere 1</h5>
                                                 <label>Coordinates for the Center</label>
@@ -211,12 +237,12 @@
 
                 amountSphere.addEventListener('input', function() {
 
-                    containerSphere.innerHTML = '';
+                    containerSphere.innerHTML = ''; // Cleans the previous forms as there is a new value input for amountSpheres now
                     let countSphere = Number(amountSphere.value);
 
                     if (countSphere > 0) {
 
-                        for(let i = 1; i <= countSphere; i++) {
+                        for(let i = 1; i <= countSphere; i++) { // Prints out that many form fields so that the user can input unique values for each sphere
 
                         containerSphere.innerHTML += `<div class="col-md-2">
                                                 <h5>Sphere ${i}</h5>
@@ -265,7 +291,7 @@
 
                     if (countWall > 0) {
 
-                        for(let i = 1; i <= countWall; i++) {
+                        for(let i = 1; i <= countWall; i++) { 
 
                         containerWall.innerHTML += `<div class="col-md-2">
                                                 <h5>Wall ${i}</h5>
