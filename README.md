@@ -21,6 +21,9 @@ HizTracer is a Python-based ray tracing application with a web interface that al
 
 ## Design and Structure
 
+
+![Web Interface](static/test-2.png)
+
 ### Ray Tracing Engine (`lib.py`)
 
 At the core of HizTracer lies a ray tracing engine written entirely in Python. The engine is composed of several classes, each responsible for a specific part of the rendering pipeline.
@@ -52,7 +55,7 @@ The `ray_bounce()` method determines the closest object hit by the ray, computes
 To determine which object is hit first, the `closest_object()` method is used. For spheres, this is done by substituting the ray equation into the sphere equation and solving for the parameter *t*, which represents the distance along the ray. For walls, the ray is tested against the plane defined by the wall’s normal, followed by a bounds check to ensure the hit point lies within the wall’s corners.
 
 ---
-
+![Web Interface](static/test-4.png)
 ## Web Interface (`index.html`, `app.py`)
 
 The web interface allows users to interactively define all required scene parameters. The main page includes an **About** section explaining HizTracer, a **Scene** section containing the input form, and a **Render** section that displays the generated image along with a progress bar.
@@ -62,8 +65,6 @@ When users visit the website, a default scene is preloaded and can be rendered i
 Upon submission, the form data is sent to `app.py` using a POST request. Although client-side validation is performed in `index.html`, server-side validation is also implemented to protect against malformed or malicious input. If validation fails, informative error messages are returned to the user.
 
 Once valid input is received, a separate rendering thread is started. This allows the rendering process to update a progress attribute, which is periodically queried by the frontend using JavaScript’s `setInterval()` function. As a result, users can see both rendering progress and the partially updated image in real time. After rendering is complete, users can submit a new scene without reloading the page.
-
-![Web Interface](static/test-4.png)
 
 ---
 
