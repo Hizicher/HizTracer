@@ -4,8 +4,6 @@
 
 *A Web-Based Ray Tracing Image Generator*
 
-![Example Render](test-2.png)
-
 HizTracer is a Python-based ray tracing application with a web interface that allows users to generate custom 3D ray-traced images. Through its interactive website, users can design their own scenes by placing objects such as spheres and walls, adjusting materials, and configuring light sources. The goal of this project is to combine a mathematically driven ray tracing engine with a user-friendly web experience.
 
 ![Feature Example](static/test-3.png)
